@@ -22,7 +22,10 @@ type fileOffset struct {
 
 func URL(ctx context.Context, localPath string) {
 	fileBytes, err := ioutil.ReadFile(localPath)
-	logger.Must(err)
+	if err != nil {
+		logger.Log.Error().Err(err).Send()
+		return
+	}
 
 	file := strings.Split(string(fileBytes), "\n")
 	fileLastIndex := len(file) - 1
@@ -36,7 +39,8 @@ func URL(ctx context.Context, localPath string) {
 			offset := fileOffset{}
 			err := mongo.FileOffset.FindOne(ctx, bson.D{}).Decode(&offset)
 			if err != nil && !errors.Is(err, mongod.ErrNoDocuments) {
-				logger.Log.Panic().Err(err).Send()
+				logger.Log.Error().Err(err).Send()
+				return
 			}
 
 			if offset.Index == fileLastIndex {
@@ -45,7 +49,10 @@ func URL(ctx context.Context, localPath string) {
 			}
 
 			err = sendLine(file[offset.Index])
-			logger.Must(err)
+			if err != nil {
+				logger.Log.Error().Err(err).Send()
+				return
+			}
 
 			opts := options.Update()
 			opts.SetUpsert(true)
@@ -54,7 +61,10 @@ func URL(ctx context.Context, localPath string) {
 					"index": 1,
 				},
 			}, opts)
-			logger.Must(err)
+			if err != nil {
+				logger.Log.Error().Err(err).Send()
+				return
+			}
 		}
 	}
 }
@@ -66,6 +76,7 @@ func sendLine(line string) (err error) {
 	registar := strings.ToLower(values[1])
 	registrationDate, err := time.Parse("02.01.2006", values[2])
 	if err != nil {
+		logger.Log.Error().Err(err).Send()
 		return
 	}
 
@@ -75,9 +86,13 @@ func sendLine(line string) (err error) {
 		RegistrationDate: registrationDate,
 	})
 	if err != nil {
+		logger.Log.Error().Err(err).Send()
 		return
 	}
 
 	_, err = stan.Conn.PublishAsync("url", bytes, nil)
+	if err != nil {
+		logger.Log.Error().Err(err).Send()
+	}
 	return
 }

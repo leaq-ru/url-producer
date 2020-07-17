@@ -12,7 +12,10 @@ import (
 	"time"
 )
 
-var FileOffset *mongo.Collection
+var (
+	DB         *mongo.Database
+	FileOffset *mongo.Collection
+)
 
 const (
 	db         = "url_producer"
@@ -38,5 +41,6 @@ func init() {
 	logger.Must(err)
 
 	urlProducer := client.Database(db)
+	DB = urlProducer
 	FileOffset = urlProducer.Collection(fileOffset)
 }

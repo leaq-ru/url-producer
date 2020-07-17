@@ -11,10 +11,13 @@ import (
 var Conn stand.Conn
 
 func init() {
-	sc, err := stand.Connect(config.Env.STAN.ClusterID, strings.Join([]string{
-		"url-producer",
-		uuid.New().String(),
-	}, "-"))
+	sc, err := stand.Connect(
+		config.Env.STAN.ClusterID,
+		strings.Join([]string{
+			"url-producer",
+			uuid.New().String(),
+		}, "-"),
+	)
 	logger.Must(err)
 	Conn = sc
 }
