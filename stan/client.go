@@ -2,16 +2,16 @@ package stan
 
 import (
 	"github.com/google/uuid"
-	stand "github.com/nats-io/stan.go"
+	s "github.com/nats-io/stan.go"
 	"github.com/nnqq/scr-url-producer/config"
 	"github.com/nnqq/scr-url-producer/logger"
 	"strings"
 )
 
-var Conn stand.Conn
+var Conn s.Conn
 
 func init() {
-	sc, err := stand.Connect(
+	sc, err := s.Connect(
 		config.Env.STAN.ClusterID,
 		strings.Join([]string{
 			"url-producer",

@@ -9,7 +9,7 @@ import (
 	"github.com/nnqq/scr-url-producer/protocol"
 	"github.com/nnqq/scr-url-producer/stan"
 	"go.mongodb.org/mongo-driver/bson"
-	mongod "go.mongodb.org/mongo-driver/mongo"
+	m "go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"io/ioutil"
 	"strings"
@@ -38,7 +38,7 @@ func URL(ctx context.Context, localPath string) {
 		default:
 			offset := fileOffset{}
 			err := mongo.FileOffset.FindOne(ctx, bson.D{}).Decode(&offset)
-			if err != nil && !errors.Is(err, mongod.ErrNoDocuments) {
+			if err != nil && !errors.Is(err, m.ErrNoDocuments) {
 				logger.Log.Error().Err(err).Send()
 				return
 			}
