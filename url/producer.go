@@ -1,4 +1,4 @@
-package producer
+package url
 
 import (
 	"context"
@@ -16,11 +16,21 @@ import (
 	"time"
 )
 
+type producer struct {
+	done chan struct{}
+}
+
 type fileOffset struct {
 	Index int `bson:"index"`
 }
 
-func URL(ctx context.Context, localPath string) {
+func NewProducer() *producer {
+	return &producer{
+		done: make(chan struct{}, 1),
+	}
+}
+
+func (p *producer) Run(localPath string) (err error) {
 	fileBytes, err := ioutil.ReadFile(localPath)
 	if err != nil {
 		logger.Log.Error().Err(err).Send()
@@ -32,41 +42,52 @@ func URL(ctx context.Context, localPath string) {
 
 	for {
 		select {
-		case <-ctx.Done():
+		case <-p.done:
 			logger.Log.Debug().Msg("URL producer loop exit")
 			return
 		default:
-			offset := fileOffset{}
-			err := mongo.FileOffset.FindOne(ctx, bson.D{}).Decode(&offset)
-			if err != nil && !errors.Is(err, m.ErrNoDocuments) {
-				logger.Log.Error().Err(err).Send()
-				return
-			}
+			func() {
+				ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+				defer cancel()
 
-			if offset.Index == fileLastIndex {
-				logger.Log.Debug().Msg("file iteration done")
-				return
-			}
+				offset := fileOffset{}
+				err = mongo.FileOffset.FindOne(ctx, bson.D{}).Decode(&offset)
+				if err != nil && !errors.Is(err, m.ErrNoDocuments) {
+					logger.Log.Error().Err(err).Send()
+					return
+				}
 
-			err = sendLine(file[offset.Index])
-			if err != nil {
-				logger.Log.Error().Err(err).Send()
-				return
-			}
+				if offset.Index == fileLastIndex {
+					logger.Log.Debug().Msg("file iteration done")
+					return
+				}
 
-			opts := options.Update()
-			opts.SetUpsert(true)
-			_, err = mongo.FileOffset.UpdateOne(ctx, bson.D{}, bson.M{
-				"$inc": bson.M{
-					"index": 1,
-				},
-			}, opts)
-			if err != nil {
-				logger.Log.Error().Err(err).Send()
-				return
-			}
+				err = sendLine(file[offset.Index])
+				if err != nil {
+					logger.Log.Error().Err(err).Send()
+					return
+				}
+				logger.Log.Debug().Str("domain", file[offset.Index]).Msg("sent URL via NATS streaming")
+
+				opts := options.Update()
+				opts.SetUpsert(true)
+				_, err = mongo.FileOffset.UpdateOne(ctx, bson.D{}, bson.M{
+					"$inc": bson.M{
+						"index": 1,
+					},
+				}, opts)
+				if err != nil {
+					logger.Log.Error().Err(err).Send()
+					return
+				}
+			}()
 		}
 	}
+}
+
+func (p *producer) GracefulStop() (err error) {
+	close(p.done)
+	return nil
 }
 
 func sendLine(line string) (err error) {

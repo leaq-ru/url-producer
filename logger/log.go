@@ -22,3 +22,9 @@ func Must(err error) {
 		Log.Panic().Err(err).Send()
 	}
 }
+
+func Err(err error) {
+	if err != nil {
+		Log.Error().Err(err).Send()
+	}
+}
