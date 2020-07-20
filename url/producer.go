@@ -85,9 +85,8 @@ func (p *producer) Run(localPath string) (err error) {
 	}
 }
 
-func (p *producer) GracefulStop() (err error) {
+func (p *producer) GracefulStop() {
 	close(p.done)
-	return nil
 }
 
 func sendLine(line string) (err error) {
