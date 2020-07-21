@@ -9,7 +9,7 @@ require (
 	github.com/klauspost/compress v1.10.4 // indirect
 	github.com/nats-io/nats-streaming-server v0.18.0 // indirect
 	github.com/nats-io/stan.go v0.7.0
-	github.com/nnqq/scr-lib-graceful v1.0.0 // indirect
+	github.com/nnqq/scr-lib-graceful v1.0.0
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/zerolog v1.19.0
 	github.com/stretchr/testify v1.6.1 // indirect
