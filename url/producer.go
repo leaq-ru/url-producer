@@ -34,7 +34,7 @@ func NewProducer() *producer {
 	}
 }
 
-func (p *producer) Run(localPath string) (err error) {
+func (p *producer) Run() (err error) {
 	res, err := http.Get(config.Env.DomainsFileURL)
 	if err != nil {
 		logger.Log.Error().Err(err).Send()
@@ -42,6 +42,11 @@ func (p *producer) Run(localPath string) (err error) {
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		logger.Log.Error().Err(err).Send()
+		return
+	}
+	err = res.Body.Close()
 	if err != nil {
 		logger.Log.Error().Err(err).Send()
 		return
@@ -117,6 +122,8 @@ func (p *producer) GracefulStop() {
 	close(p.done)
 }
 
+// format
+// SOMETHING.RU	REGRU-RU	18.11.2015	18.11.2020	19.12.2020	1
 func sendLine(line string) (err error) {
 	values := strings.Split(line, "\t")
 
