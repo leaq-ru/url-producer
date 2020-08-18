@@ -5,10 +5,10 @@ import (
 )
 
 type c struct {
-	STAN     stan
-	Mongo    mongo
-	LogLevel string `envconfig:"LOGLEVEL"`
-	FilePath string `envconfig:"FILEPATH"`
+	STAN           stan
+	Mongo          mongo
+	LogLevel       string `envconfig:"LOGLEVEL"`
+	DomainsFileURL string `envconfig:"DOMAINSFILEURL"`
 }
 
 type stan struct {

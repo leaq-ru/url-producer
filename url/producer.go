@@ -1,9 +1,12 @@
 package url
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/nnqq/scr-url-producer/config"
 	"github.com/nnqq/scr-url-producer/logger"
 	"github.com/nnqq/scr-url-producer/mongo"
 	"github.com/nnqq/scr-url-producer/protocol"
@@ -12,6 +15,7 @@ import (
 	m "go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"io/ioutil"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -31,7 +35,25 @@ func NewProducer() *producer {
 }
 
 func (p *producer) Run(localPath string) (err error) {
-	fileBytes, err := ioutil.ReadFile(localPath)
+	res, err := http.Get(config.Env.DomainsFileURL)
+	if err != nil {
+		logger.Log.Error().Err(err).Send()
+		return
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		logger.Log.Error().Err(err).Send()
+		return
+	}
+
+	gzipReader, err := gzip.NewReader(bytes.NewReader(body))
+	if err != nil {
+		logger.Log.Error().Err(err).Send()
+		return
+	}
+
+	fileBytes, err := ioutil.ReadAll(gzipReader)
 	if err != nil {
 		logger.Log.Error().Err(err).Send()
 		return
@@ -58,6 +80,12 @@ func (p *producer) Run(localPath string) (err error) {
 				}
 
 				if offset.Index == fileLastIndex {
+					_, err = mongo.FileOffset.DeleteOne(ctx, bson.D{})
+					if err != nil {
+						logger.Log.Error().Err(err).Send()
+						return
+					}
+
 					logger.Log.Debug().Msg("file iteration done")
 					return
 				}
@@ -100,7 +128,7 @@ func sendLine(line string) (err error) {
 		return
 	}
 
-	bytes, err := json.Marshal(protocol.URLMessage{
+	b, err := json.Marshal(protocol.URLMessage{
 		URL:              url,
 		Registrar:        registar,
 		RegistrationDate: registrationDate,
@@ -110,7 +138,7 @@ func sendLine(line string) (err error) {
 		return
 	}
 
-	_, err = stan.Conn.PublishAsync("url", bytes, nil)
+	_, err = stan.Conn.PublishAsync("url", b, nil)
 	if err != nil {
 		logger.Log.Error().Err(err).Send()
 	}

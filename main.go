@@ -11,5 +11,5 @@ func main() {
 	urlProducer := url.NewProducer()
 	go graceful.HandleSignals(urlProducer.GracefulStop)
 
-	logger.Must(urlProducer.Run(config.Env.FilePath))
+	logger.Must(urlProducer.Run(config.Env.DomainsFileURL))
 }
