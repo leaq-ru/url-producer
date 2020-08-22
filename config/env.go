@@ -6,14 +6,18 @@ import (
 
 type c struct {
 	STAN           stan
+	NATS           nats
 	Mongo          mongo
 	LogLevel       string `envconfig:"LOGLEVEL"`
 	DomainsFileURL string `envconfig:"DOMAINSFILEURL"`
 }
 
 type stan struct {
-	URL       string `envconfig:"STAN_URL"`
 	ClusterID string `envconfig:"STAN_CLUSTERID"`
+}
+
+type nats struct {
+	URL string `envconfig:"NATS_URL"`
 }
 
 type mongo struct {

@@ -17,6 +17,7 @@ func init() {
 			"url-producer",
 			uuid.New().String(),
 		}, "-"),
+		s.NatsURL(config.Env.NATS.URL),
 	)
 	logger.Must(err)
 	Conn = sc
