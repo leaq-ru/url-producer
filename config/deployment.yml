@@ -40,10 +40,9 @@ spec:
                 httpGet:
                   path: /healthz
                   port: 80
-              ports:
-                - containerPort: 80
-                  name: http
-                  protocol: TCP
+              resources:
+                requests:
+                  memory: 350Mi
               env:
                 - name: STAN_CLUSTERID
                   valueFrom:
