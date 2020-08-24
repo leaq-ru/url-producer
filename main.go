@@ -12,11 +12,11 @@ func healthz() {
 		_, err := w.Write(nil)
 		logger.Err(err)
 	}))
-	go logger.Err(http.ListenAndServe("0.0.0.0:80", nil))
+	logger.Err(http.ListenAndServe("0.0.0.0:80", nil))
 }
 
 func main() {
-	healthz()
+	go healthz()
 
 	urlProducer := url.NewProducer()
 	go graceful.HandleSignals(urlProducer.GracefulStop)
