@@ -34,12 +34,16 @@ spec:
                       - sleep 5
               livenessProbe:
                 httpGet:
-                  port: 80
                   path: /healthz
+                  port: 80
               readinessProbe:
                 httpGet:
-                  port: 80
                   path: /healthz
+                  port: 80
+              ports:
+                - containerPort: 80
+                  name: http
+                  protocol: TCP
               env:
                 - name: STAN_CLUSTERID
                   valueFrom:
