@@ -1,0 +1,64 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: url-producer
+  labels:
+    app: url-producer
+spec:
+  concurrencyPolicy: Forbid
+  schedule: "0 1 1,15 * *"
+  jobTemplate:
+    metadata:
+      labels:
+        app: url-producer
+      annotations:
+        linkerd.io/inject: enabled
+        config.linkerd.io/skip-outbound-ports: "4222"
+    spec:
+      template:
+        spec:
+          imagePullSecrets:
+            - name: regcred
+          containers:
+            - name: url-producer
+              image: busybox
+              command:
+                - /app/servicebin
+              lifecycle:
+                preStop:
+                  exec:
+                    command:
+                      - sh
+                      - -c
+                      - sleep 5
+              livenessProbe:
+                httpGet:
+                  port: 80
+                  path: /healthz
+              readinessProbe:
+                httpGet:
+                  port: 80
+                  path: /healthz
+              env:
+                - name: STAN_CLUSTERID
+                  valueFrom:
+                    configMapKeyRef:
+                      key: clusterid
+                      name: stan
+                - name: NATS_URL
+                  valueFrom:
+                    configMapKeyRef:
+                      key: url
+                      name: nats
+                - name: MONGODB_URL
+                  valueFrom:
+                    configMapKeyRef:
+                      key: url
+                      name: mongodb
+                - name: DOMAINSFILE_URL
+                  valueFrom:
+                    configMapKeyRef:
+                      key: url
+                      name: domainsfile
+                - name: LOGLEVEL
+                  value: error

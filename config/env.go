@@ -5,11 +5,11 @@ import (
 )
 
 type c struct {
-	STAN           stan
-	NATS           nats
-	Mongo          mongo
-	LogLevel       string `envconfig:"LOGLEVEL"`
-	DomainsFileURL string `envconfig:"DOMAINSFILEURL"`
+	STAN        stan
+	NATS        nats
+	MongoDB     mongodb
+	DomainsFile domainsFile
+	LogLevel    string `envconfig:"LOGLEVEL"`
 }
 
 type stan struct {
@@ -20,8 +20,12 @@ type nats struct {
 	URL string `envconfig:"NATS_URL"`
 }
 
-type mongo struct {
-	URL string `envconfig:"MONGO_URL"`
+type mongodb struct {
+	URL string `envconfig:"MONGODB_URL"`
+}
+
+type domainsFile struct {
+	URL string `envconfig:"DOMAINSFILE_URL"`
 }
 
 var Env c

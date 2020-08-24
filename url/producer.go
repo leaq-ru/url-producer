@@ -35,7 +35,7 @@ func NewProducer() *producer {
 }
 
 func (p *producer) Run() (err error) {
-	res, err := http.Get(config.Env.DomainsFileURL)
+	res, err := http.Get(config.Env.DomainsFile.URL)
 	if err != nil {
 		logger.Log.Error().Err(err).Send()
 		return
