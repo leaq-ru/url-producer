@@ -12,7 +12,7 @@ func healthz() {
 		_, err := w.Write(nil)
 		logger.Err(err)
 	}))
-	logger.Err(http.ListenAndServe("0.0.0.0:80", nil))
+	go logger.Err(http.ListenAndServe("0.0.0.0:80", nil))
 }
 
 func main() {
