@@ -42,7 +42,7 @@ spec:
                   port: 80
               resources:
                 requests:
-                  memory: 1350Mi
+                  memory: 350Mi
               env:
                 - name: STAN_CLUSTERID
                   valueFrom:
