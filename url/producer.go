@@ -68,19 +68,16 @@ func (p *producer) Run() (err error) {
 	file := strings.Split(string(fileBytes), "\n")
 	fileBytes = nil
 
-	var bulk []interface{}
 	for _, row := range file {
-		bulk = append(bulk, fileEntity{
+		_, err = mongo.FileEntity.InsertOne(context.Background(), fileEntity{
 			Row: row,
 		})
+		if err != nil {
+			logger.Log.Error().Err(err).Send()
+			return
+		}
 	}
 	file = nil
-	_, err = mongo.FileEntity.InsertMany(context.Background(), bulk)
-	bulk = nil
-	if err != nil {
-		logger.Log.Error().Err(err).Send()
-		return
-	}
 
 	err = p.startFileProcessing()
 	if err != nil {
