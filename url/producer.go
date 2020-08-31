@@ -41,56 +41,65 @@ func (p *producer) Run() (err error) {
 	}
 
 	if count == 0 {
-		res, err := http.Get(config.Env.DomainsFile.URL)
+		err = downloadURLList()
 		if err != nil {
 			logger.Log.Error().Err(err).Send()
 			return
 		}
-
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			logger.Log.Error().Err(err).Send()
-			return
-		}
-		err = res.Body.Close()
-		if err != nil {
-			logger.Log.Error().Err(err).Send()
-			return
-		}
-
-		gzipReader, err := gzip.NewReader(bytes.NewReader(body))
-		body = nil
-		if err != nil {
-			logger.Log.Error().Err(err).Send()
-			return
-		}
-
-		fileBytes, err := ioutil.ReadAll(gzipReader)
-		gzipReader = nil
-		if err != nil {
-			logger.Log.Error().Err(err).Send()
-			return
-		}
-
-		file := strings.Split(string(fileBytes), "\n")
-		fileBytes = nil
-
-		for _, row := range file {
-			_, err = mongo.FileEntity.InsertOne(context.Background(), fileEntity{
-				Row: row,
-			})
-			if err != nil {
-				logger.Log.Error().Err(err).Send()
-				return
-			}
-		}
-		file = nil
 	}
 
 	err = p.startFileProcessing()
 	if err != nil {
 		logger.Log.Error().Err(err).Send()
 	}
+	return
+}
+
+func downloadURLList() (err error) {
+	res, err := http.Get(config.Env.DomainsFile.URL)
+	if err != nil {
+		logger.Log.Error().Err(err).Send()
+		return
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		logger.Log.Error().Err(err).Send()
+		return
+	}
+	err = res.Body.Close()
+	if err != nil {
+		logger.Log.Error().Err(err).Send()
+		return
+	}
+
+	gzipReader, err := gzip.NewReader(bytes.NewReader(body))
+	body = nil
+	if err != nil {
+		logger.Log.Error().Err(err).Send()
+		return
+	}
+
+	fileBytes, err := ioutil.ReadAll(gzipReader)
+	gzipReader = nil
+	if err != nil {
+		logger.Log.Error().Err(err).Send()
+		return
+	}
+
+	file := strings.Split(string(fileBytes), "\n")
+	fileBytes = nil
+
+	for _, row := range file {
+		_, err = mongo.FileEntity.InsertOne(context.Background(), fileEntity{
+			Row: row,
+		})
+		if err != nil {
+			logger.Log.Error().Err(err).Send()
+			return
+		}
+	}
+	file = nil
 	return
 }
 
