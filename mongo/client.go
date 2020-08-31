@@ -12,14 +12,11 @@ import (
 	"time"
 )
 
-var (
-	DB         *mongo.Database
-	FileOffset *mongo.Collection
-)
+var FileEntity *mongo.Collection
 
 const (
 	db         = "url_producer"
-	fileOffset = "file_offset"
+	fileEntity = "file_entity"
 )
 
 func init() {
@@ -41,6 +38,5 @@ func init() {
 	logger.Must(err)
 
 	urlProducer := client.Database(db)
-	DB = urlProducer
-	FileOffset = urlProducer.Collection(fileOffset)
+	FileEntity = urlProducer.Collection(fileEntity)
 }

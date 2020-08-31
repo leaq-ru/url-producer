@@ -13,7 +13,6 @@ import (
 	"github.com/nnqq/scr-url-producer/stan"
 	"go.mongodb.org/mongo-driver/bson"
 	m "go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -24,8 +23,8 @@ type producer struct {
 	done chan struct{}
 }
 
-type fileOffset struct {
-	Index int `bson:"index"`
+type fileEntity struct {
+	Row string `bson:"r"`
 }
 
 func NewProducer() *producer {
@@ -53,28 +52,56 @@ func (p *producer) Run() (err error) {
 	}
 
 	gzipReader, err := gzip.NewReader(bytes.NewReader(body))
+	body = nil
 	if err != nil {
 		logger.Log.Error().Err(err).Send()
 		return
 	}
 
 	fileBytes, err := ioutil.ReadAll(gzipReader)
+	gzipReader = nil
 	if err != nil {
 		logger.Log.Error().Err(err).Send()
 		return
 	}
 
 	file := strings.Split(string(fileBytes), "\n")
-	fileLastIndex := len(file) - 1
+	fileBytes = nil
 
+	var bulk []interface{}
+	for _, row := range file {
+		bulk = append(bulk, fileEntity{
+			Row: row,
+		})
+	}
+	file = nil
+	_, err = mongo.FileEntity.InsertMany(context.Background(), bulk)
+	bulk = nil
+	if err != nil {
+		logger.Log.Error().Err(err).Send()
+		return
+	}
+
+	err = p.startFileProcessing()
+	if err != nil {
+		logger.Log.Error().Err(err).Send()
+	}
+	return
+}
+
+func (p *producer) startFileProcessing() (err error) {
 	for {
 		select {
 		case <-p.done:
 			logger.Log.Debug().Msg("URL producer loop graceful shutdown")
 			return
 		default:
-			err = processRow(file, fileLastIndex)
+			err = processRow()
 			if err != nil {
+				if errors.Is(err, m.ErrNoDocuments) {
+					return nil
+				}
+
 				logger.Log.Error().Err(err).Send()
 				return
 			}
@@ -116,42 +143,17 @@ func sendLine(line string) (err error) {
 	return
 }
 
-func processRow(file []string, fileLastIndex int) (err error) {
+func processRow() (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	offset := fileOffset{}
-	err = mongo.FileOffset.FindOne(ctx, bson.D{}).Decode(&offset)
-	if err != nil && !errors.Is(err, m.ErrNoDocuments) {
-		logger.Log.Error().Err(err).Send()
-		return
-	}
-
-	if offset.Index == fileLastIndex {
-		_, err = mongo.FileOffset.DeleteOne(ctx, bson.D{})
-		if err != nil {
-			logger.Log.Error().Err(err).Send()
-			return
-		}
-
-		logger.Log.Debug().Msg("file iteration done")
-		return
-	}
-
-	err = sendLine(file[offset.Index])
+	fe := fileEntity{}
+	err = mongo.FileEntity.FindOneAndDelete(ctx, bson.D{}).Decode(&fe)
 	if err != nil {
-		logger.Log.Error().Err(err).Send()
 		return
 	}
-	logger.Log.Debug().Str("domain", file[offset.Index]).Msg("sent URL via NATS streaming")
 
-	opts := options.Update()
-	opts.SetUpsert(true)
-	_, err = mongo.FileOffset.UpdateOne(ctx, bson.D{}, bson.M{
-		"$inc": bson.M{
-			"index": 1,
-		},
-	}, opts)
+	err = sendLine(fe.Row)
 	if err != nil {
 		logger.Log.Error().Err(err).Send()
 	}
