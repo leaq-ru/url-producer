@@ -46,7 +46,7 @@ spec:
                   memory: 420Mi
                 limits:
                   cpu: "1"
-                  memory: 1Gi
+                  memory: 2Gi
               env:
                 - name: STAN_CLUSTERID
                   valueFrom:
