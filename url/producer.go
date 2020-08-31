@@ -34,50 +34,58 @@ func NewProducer() *producer {
 }
 
 func (p *producer) Run() (err error) {
-	res, err := http.Get(config.Env.DomainsFile.URL)
+	count, err := mongo.FileEntity.CountDocuments(context.Background(), bson.D{})
 	if err != nil {
 		logger.Log.Error().Err(err).Send()
 		return
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		logger.Log.Error().Err(err).Send()
-		return
-	}
-	err = res.Body.Close()
-	if err != nil {
-		logger.Log.Error().Err(err).Send()
-		return
-	}
-
-	gzipReader, err := gzip.NewReader(bytes.NewReader(body))
-	body = nil
-	if err != nil {
-		logger.Log.Error().Err(err).Send()
-		return
-	}
-
-	fileBytes, err := ioutil.ReadAll(gzipReader)
-	gzipReader = nil
-	if err != nil {
-		logger.Log.Error().Err(err).Send()
-		return
-	}
-
-	file := strings.Split(string(fileBytes), "\n")
-	fileBytes = nil
-
-	for _, row := range file {
-		_, err = mongo.FileEntity.InsertOne(context.Background(), fileEntity{
-			Row: row,
-		})
+	if count == 0 {
+		res, err := http.Get(config.Env.DomainsFile.URL)
 		if err != nil {
 			logger.Log.Error().Err(err).Send()
 			return
 		}
+
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			logger.Log.Error().Err(err).Send()
+			return
+		}
+		err = res.Body.Close()
+		if err != nil {
+			logger.Log.Error().Err(err).Send()
+			return
+		}
+
+		gzipReader, err := gzip.NewReader(bytes.NewReader(body))
+		body = nil
+		if err != nil {
+			logger.Log.Error().Err(err).Send()
+			return
+		}
+
+		fileBytes, err := ioutil.ReadAll(gzipReader)
+		gzipReader = nil
+		if err != nil {
+			logger.Log.Error().Err(err).Send()
+			return
+		}
+
+		file := strings.Split(string(fileBytes), "\n")
+		fileBytes = nil
+
+		for _, row := range file {
+			_, err = mongo.FileEntity.InsertOne(context.Background(), fileEntity{
+				Row: row,
+			})
+			if err != nil {
+				logger.Log.Error().Err(err).Send()
+				return
+			}
+		}
+		file = nil
 	}
-	file = nil
 
 	err = p.startFileProcessing()
 	if err != nil {
@@ -147,6 +155,10 @@ func processRow() (err error) {
 	fe := fileEntity{}
 	err = mongo.FileEntity.FindOneAndDelete(ctx, bson.D{}).Decode(&fe)
 	if err != nil {
+		return
+	}
+
+	if fe.Row == "" {
 		return
 	}
 
