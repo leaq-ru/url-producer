@@ -68,5 +68,15 @@ spec:
                     configMapKeyRef:
                       key: url
                       name: domainsfile
+                - name: DOMAINSFILE_URLSU
+                  valueFrom:
+                    configMapKeyRef:
+                      key: urlsu
+                      name: domainsfile
+                - name: DOMAINSFILE_URLRF
+                  valueFrom:
+                    configMapKeyRef:
+                      key: urlrf
+                      name: domainsfile
                 - name: LOGLEVEL
                   value: error

@@ -41,7 +41,19 @@ func (p *producer) Run() (err error) {
 	}
 
 	if count == 0 {
-		err = downloadURLList()
+		err = downloadList(config.Env.DomainsFile.URL)
+		if err != nil {
+			logger.Log.Error().Err(err).Send()
+			return
+		}
+
+		err = downloadList(config.Env.DomainsFile.URLsu)
+		if err != nil {
+			logger.Log.Error().Err(err).Send()
+			return
+		}
+
+		err = downloadList(config.Env.DomainsFile.URLrf)
 		if err != nil {
 			logger.Log.Error().Err(err).Send()
 			return
@@ -55,8 +67,8 @@ func (p *producer) Run() (err error) {
 	return
 }
 
-func downloadURLList() (err error) {
-	res, err := http.Get(config.Env.DomainsFile.URL)
+func downloadList(url string) (err error) {
+	res, err := http.Get(url)
 	if err != nil {
 		logger.Log.Error().Err(err).Send()
 		return

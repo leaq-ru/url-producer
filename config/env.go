@@ -25,7 +25,9 @@ type mongodb struct {
 }
 
 type domainsFile struct {
-	URL string `envconfig:"DOMAINSFILE_URL"`
+	URL   string `envconfig:"DOMAINSFILE_URL"`
+	URLsu string `envconfig:"DOMAINSFILE_URLSU"`
+	URLrf string `envconfig:"DOMAINSFILE_URLRF"`
 }
 
 var Env c
