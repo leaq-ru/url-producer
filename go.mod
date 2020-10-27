@@ -14,6 +14,7 @@ require (
 	github.com/rs/zerolog v1.19.0
 	github.com/stretchr/testify v1.6.1 // indirect
 	go.mongodb.org/mongo-driver v1.3.5
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 )

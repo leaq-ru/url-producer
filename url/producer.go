@@ -13,6 +13,7 @@ import (
 	"github.com/nnqq/scr-url-producer/stan"
 	"go.mongodb.org/mongo-driver/bson"
 	m "go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/sync/errgroup"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -41,33 +42,31 @@ func (p *producer) Run() (err error) {
 	}
 
 	if count == 0 {
-		err = downloadList(config.Env.DomainsFile.URL)
-		if err != nil {
-			logger.Log.Error().Err(err).Send()
-			return
-		}
-
-		err = downloadList(config.Env.DomainsFile.URLsu)
-		if err != nil {
-			logger.Log.Error().Err(err).Send()
-			return
-		}
-
-		err = downloadList(config.Env.DomainsFile.URLrf)
+		var g errgroup.Group
+		g.Go(func() error {
+			return loadListToMongo(config.Env.DomainsFile.URL)
+		})
+		g.Go(func() error {
+			return loadListToMongo(config.Env.DomainsFile.URLsu)
+		})
+		g.Go(func() error {
+			return loadListToMongo(config.Env.DomainsFile.URLrf)
+		})
+		err = g.Wait()
 		if err != nil {
 			logger.Log.Error().Err(err).Send()
 			return
 		}
 	}
 
-	err = p.startFileProcessing()
+	err = p.startMongoProcessing()
 	if err != nil {
 		logger.Log.Error().Err(err).Send()
 	}
 	return
 }
 
-func downloadList(url string) (err error) {
+func loadListToMongo(url string) (err error) {
 	res, err := http.Get(url)
 	if err != nil {
 		logger.Log.Error().Err(err).Send()
@@ -115,7 +114,7 @@ func downloadList(url string) (err error) {
 	return
 }
 
-func (p *producer) startFileProcessing() (err error) {
+func (p *producer) startMongoProcessing() (err error) {
 	for {
 		select {
 		case <-p.done:
