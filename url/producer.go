@@ -13,7 +13,6 @@ import (
 	"github.com/nnqq/scr-url-producer/stan"
 	"go.mongodb.org/mongo-driver/bson"
 	m "go.mongodb.org/mongo-driver/mongo"
-	"golang.org/x/sync/errgroup"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -42,17 +41,19 @@ func (p *producer) Run() (err error) {
 	}
 
 	if count == 0 {
-		var g errgroup.Group
-		g.Go(func() error {
-			return loadListToMongo(config.Env.DomainsFile.URL)
-		})
-		g.Go(func() error {
-			return loadListToMongo(config.Env.DomainsFile.URLsu)
-		})
-		g.Go(func() error {
-			return loadListToMongo(config.Env.DomainsFile.URLrf)
-		})
-		err = g.Wait()
+		err = loadListToMongo(config.Env.DomainsFile.URLrf)
+		if err != nil {
+			logger.Log.Error().Err(err).Send()
+			return
+		}
+
+		err = loadListToMongo(config.Env.DomainsFile.URLsu)
+		if err != nil {
+			logger.Log.Error().Err(err).Send()
+			return
+		}
+
+		err = loadListToMongo(config.Env.DomainsFile.URL)
 		if err != nil {
 			logger.Log.Error().Err(err).Send()
 			return
