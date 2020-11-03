@@ -13,6 +13,7 @@ import (
 	"github.com/nnqq/scr-url-producer/stan"
 	"go.mongodb.org/mongo-driver/bson"
 	m "go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/sync/errgroup"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -40,6 +41,12 @@ func (p *producer) Run() (err error) {
 		return
 	}
 
+	var eg errgroup.Group
+	eg.Go(func() error {
+		time.Sleep(time.Minute)
+		return p.startMongoProcessing()
+	})
+
 	if count == 0 {
 		err = loadListToMongo(config.Env.DomainsFile.URLrf)
 		if err != nil {
@@ -60,7 +67,7 @@ func (p *producer) Run() (err error) {
 		}
 	}
 
-	err = p.startMongoProcessing()
+	err = eg.Wait()
 	if err != nil {
 		logger.Log.Error().Err(err).Send()
 	}
