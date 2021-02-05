@@ -6,7 +6,7 @@ metadata:
     app: url-producer
 spec:
   concurrencyPolicy: Forbid
-  schedule: "0 1 15 */12 *"
+  schedule: "0 1 15 */4 *"
   jobTemplate:
     metadata:
       labels:
