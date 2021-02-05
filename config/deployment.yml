@@ -6,14 +6,11 @@ metadata:
     app: url-producer
 spec:
   concurrencyPolicy: Forbid
-  schedule: "0 1 15 */4 *"
+  schedule: "0 1 1 */4 *"
   jobTemplate:
     metadata:
       labels:
         app: url-producer
-      annotations:
-        linkerd.io/inject: enabled
-        config.linkerd.io/skip-outbound-ports: "4222"
     spec:
       template:
         spec:
