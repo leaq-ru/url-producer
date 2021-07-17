@@ -2,8 +2,8 @@ package mongo
 
 import (
 	"context"
-	"github.com/nnqq/scr-url-producer/config"
-	"github.com/nnqq/scr-url-producer/logger"
+	"github.com/leaq-ru/url-producer/config"
+	"github.com/leaq-ru/url-producer/logger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readconcern"

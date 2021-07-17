@@ -1,3 +1,1 @@
-# scr-url-producer
-
-K8s cron job 
+https://github.com/leaq-ru/about

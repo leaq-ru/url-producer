@@ -1,9 +1,9 @@
 package main
 
 import (
-	graceful "github.com/nnqq/scr-lib-graceful"
-	"github.com/nnqq/scr-url-producer/logger"
-	"github.com/nnqq/scr-url-producer/url"
+	graceful "github.com/leaq-ru/lib-graceful"
+	"github.com/leaq-ru/url-producer/logger"
+	"github.com/leaq-ru/url-producer/url"
 	"net/http"
 )
 
